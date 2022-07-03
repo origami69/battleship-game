@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= htmlWebpackPlugin.options.title %>
+    </title>
+</head>
+
+<body>
+    <div class="container">
+        <p>BattleShip Game</p>
+        <div class="userGuide">
+            <p class="userName">You</p>
+            <p class="aiName">Ai</p>
+        </div>
+        <div class="duelZone">
+            <div class="shipTrans">
+                <div class="carri" id='drag' draggable="true">
+                    <div id="carrier0"></div>
+                    <div id="carrier1"></div>
+                    <div id="carrier2"></div>
+                    <div id="carrier3"></div>
+                    <div id="carrier4"></div>
+                </div>
+                <div class="battle" id='drag' draggable="true">
+                    <div id="battleship0"></div>
+                    <div id="battleship1"></div>
+                    <div id="battleship2"></div>
+                    <div id="battleship3"></div>
+                </div>
+                <div class="cruise" id='drag' draggable="true">
+                    <div id="cruiser0"></div>
+                    <div id="cruiser1"></div>
+                    <div id="cruiser2"></div>
+                </div>
+                <div class="sub" id='drag' draggable="true">
+                    <div id="submarine0"></div>
+                    <div id="submarine1"></div>
+                    <div id="submarine2"></div>
+                </div>
+                <div class="destroy" id='drag' draggable="true">
+                    <div id="destroyer0"></div>
+                    <div id="destroyer1"></div>
+                </div>
+                <button class="rotate">Rotate Ship</button>
+            </div>
+            <div class="playHere">
+            </div>
+            <div class="playHere2"></div>
+
+        </div>
+        <div class="buttHolder">
+            <button class="reZero"></button>
+            <button class="start">Start Game</button>
+            <div class="wordState"></div>
+        </div>
+
+    </div>
+
+
+</body>
+
+</html>
