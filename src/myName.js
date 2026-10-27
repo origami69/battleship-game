@@ -1,4 +1,3 @@
-
 function myPage() {
     let player = [
         [],
@@ -415,8 +414,14 @@ function myPage() {
     let where=''
     function computer() {
         checkAll()
-        const starth = Math.floor(Math.random() * 10)
-        const startv = Math.floor(Math.random() * 10)
+        let starth = (Math.floor(Math.random() * 10) );
+        let startv;
+        if (starth % 2 == 0) {
+                startv = 1 + Math.floor(Math.random() * 5) * 2
+        }
+        else {
+            startv = Math.floor(Math.random() * 5) * 2;
+        }
         if (turn === 'computer') {
             if(smart===false){
             if (player[starth][startv].classList.contains('took') 
@@ -1341,8 +1346,8 @@ function myPage() {
             }
    
             if(where==='down'){        
-                if(!player[previous[0].y][previous[0].x].classList.contains('miss') && !player[previous[0].y+1][previous[0].x].classList.contains('miss') && !player[previous[0].y+1][previous[0].x].classList.contains('boom')){  
-                    if(player[previous[0].y+1][previous[0].x].classList.contains('took')){   
+                if(!player[previous[0].y][previous[0].x].classList.contains('miss') && !player[previous[0].y][previous[0].x].classList.contains('boom')){  
+                    if(player[previous[0].y][previous[0].x].classList.contains('took')){   
                 player[previous[0].y+1][previous[0].x].classList.add('boom')
                 player[previous[0].y+1][previous[0].x].classList.remove('took')
            
@@ -1470,6 +1475,9 @@ function myPage() {
         }
     }
 
+}
+myPage()
+export { myPage };
 }
 myPage()
 export { myPage };
