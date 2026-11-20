@@ -1,181 +1,211 @@
 * {
-    padding: 0px;
-    margin: 0px;
+    padding: 0;
+    margin: 0;
     box-sizing: border-box;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 20px;
 }
 
-.playHere {
-    display: grid;
-    width: fit-content;
-    height: fit-content;
-    grid-template-columns: repeat(10, auto);
+:root {
+    --cell-size: clamp(25px, 6vw, 69px);
+    --ship-color: gray;
+    --border-color: lightsteelblue;
 }
 
-.block {
-    display: flex;
-    width: 69px;
-    height: 69px;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    font-weight: bold;
-    border: 2px solid lightsteelblue;
-    transition: background 0.2s ease-in-out;
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: white;
 }
 
 .container {
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 20px 12px;
+    gap: 15px;
     background: white;
 }
 
+.container > p {
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: bold;
+}
+
+.userGuide {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1400px;
+    padding: 0 5px;
+}
+
+.userName,
+.aiName {
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: bold;
+}
+
+/* Both game boards */
+
+.playHere,
 .playHere2 {
     display: grid;
-    grid-template-columns: repeat(10, auto);
-    margin-left: 30px;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    width: calc(var(--cell-size) * 10);
+    aspect-ratio: 1 / 1;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.playHere > div,
+.playHere2 > div {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.playHere2 {
+    margin-left: 0;
+}
+
+.block {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 1;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(12px, 3vw, 3rem);
+    font-weight: bold;
+    border: 1px solid var(--border-color);
+    transition: background 0.2s ease-in-out;
 }
 
 .block:hover {
     cursor: pointer;
 }
 
-.duelZone {
-    display: flex;
-    flex-direction: row;
-    align-content: space-between;
-    width: max-content;
-}
-
-.userGuide {
-    display: flex;
-    flex-direction: row;
-}
-
-.aiName {
-    margin-left: 690px;
-}
-
-.sub {
-    background-color: gray;
-    display: flex;
-    height: 69px;
-    width: 207px;
-    border-radius: 7px;
-}
-
-.carri {
-    background-color: gray;
-    display: flex;
-    height: 69px;
-    width: 345px;
-    border-radius: 7px;
-}
-
-.destroy {
-    background-color: gray;
-    display: flex;
-    height: 69px;
-    width: 138px;
-    border-radius: 7px;
-}
-
-.cruise {
-    background-color: gray;
-    display: flex;
-    height: 69px;
-    width: 207px;
-    border-radius: 7px;
-}
-
-.battle {
-    background-color: gray;
-    display: flex;
-    height: 69px;
-    width: 276px;
-    border-radius: 7px;
-}
-
-.shiptTrans {
-    display: flex;
-    flex-direction: column;
-}
-
 .playHere .block:hover {
     cursor: default;
 }
 
-.dragging {
-    opacity: .5;
+/* Game area */
+
+.duelZone {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: clamp(10px, 3vw, 30px);
+    width: 100%;
+    max-width: 1400px;
 }
+
+.shipTrans {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.playHere2 {
+    flex-shrink: 0;
+}
+
+/* Ships */
+
+.sub,
+.carri,
+.destroy,
+.cruise,
+.battle {
+    background-color: var(--ship-color);
+    display: flex;
+    height: var(--cell-size);
+    border-radius: 7px;
+    flex-shrink: 0;
+}
+
+.sub,
+.cruise {
+    width: calc(var(--cell-size) * 3);
+}
+
+.carri {
+    width: calc(var(--cell-size) * 5);
+}
+
+.destroy {
+    width: calc(var(--cell-size) * 2);
+}
+
+.battle {
+    width: calc(var(--cell-size) * 4);
+}
+
+/* Vertical ships */
 
 .vert-shipTrans {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
 }
 
-.vert-sub {
-    background-color: gray;
-    display: flex;
-    width: 69px;
-    height: 207px;
-    border-radius: 7px;
+.vert-sub,
+.vert-cruise {
+    width: var(--cell-size);
+    height: calc(var(--cell-size) * 3);
 }
 
 .vert-carri {
-    background-color: gray;
-    display: flex;
-    width: 69px;
-    height: 345px;
-    border-radius: 7px;
+    width: var(--cell-size);
+    height: calc(var(--cell-size) * 5);
 }
 
 .vert-destroy {
-    background-color: gray;
-    display: flex;
-    width: 69px;
-    height: 138px;
-    border-radius: 7px;
-}
-
-.vert-cruise {
-    background-color: gray;
-    display: flex;
-    width: 69px;
-    height: 207px;
-    border-radius: 7px;
+    width: var(--cell-size);
+    height: calc(var(--cell-size) * 2);
 }
 
 .vert-battle {
-    background-color: gray;
-    display: flex;
-    width: 69px;
-    height: 276px;
-    border-radius: 7px;
+    width: var(--cell-size);
+    height: calc(var(--cell-size) * 4);
 }
 
-.rotate {
-    width: 100px;
-    height: 69px;
-    border-radius: 7px;
-    background-color: #bdd4e7;
-    background-image: linear-gradient(315deg, #bdd4e7 0%, #8693ab 74%);
-    color: white;
-}
+/* Buttons */
 
+.rotate,
 .start {
-    width: 100px;
-    height: 69px;
+    min-width: 100px;
+    min-height: 48px;
+    padding: 8px 12px;
+    border: none;
     border-radius: 7px;
     background-color: #bdd4e7;
     background-image: linear-gradient(315deg, #bdd4e7 0%, #8693ab 74%);
     color: white;
+    font-size: 16px;
+    cursor: pointer;
 }
+
+.buttHolder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+}
+
+.wordState {
+    text-align: center;
+    font-size: 16px;
+}
+
+/* Game states */
 
 .boom {
     background: red;
@@ -187,4 +217,275 @@
 
 .playHere .took {
     background: grey;
+}
+
+.dragging {
+    opacity: 0.5;
+}
+
+/* Smaller screens */
+
+@media (max-width: 700px) {
+    :root {
+        --cell-size: clamp(25px, 8vw, 45px);
+    }
+
+    .container {
+        justify-content: flex-start;
+        padding-top: 15px;
+    }
+
+    .duelZone {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .playHere,
+    .playHere2 {
+        width: min(100%, calc(var(--cell-size) * 10));
+    }
+
+    .shipTrans {
+        width: 100%;
+        align-items: center;
+    }
+
+    .vert-shipTrans {
+        justify-content: center;
+    }
+
+    .buttHolder {
+        padding-bottom: 15px;
+    }
+}
+
+/* Very narrow phones */
+
+@media (max-width: 360px) {
+    :root {
+        --cell-size: 27px;
+    }
+
+    .container {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    .duelZone {
+        gap: 15px;
+    }
+
+    .rotate,
+    .start {
+        min-width: 90px;
+        font-size: 14px;
+    }
+}
+:root {
+    --cell-size: clamp(18px, 5vw, 69px);
+}
+
+
+
+@media (max-width: 600px) {
+    :root {
+        --cell-size: clamp(16px, 4.5vw, 27px);
+    }
+
+    .duelZone {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .playHere,
+    .playHere2 {
+        width: calc(var(--cell-size) * 10);
+    }
+}
+:root {
+    --board-size: min(46vw, 690px);
+}
+
+.playHere,
+.playHere2 {
+    width: var(--board-size) !important;
+    height: var(--board-size) !important;
+
+    flex: 0 0 var(--board-size) !important;
+    flex-shrink: 0 !important;
+
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+
+    box-sizing: border-box;
+}
+
+.playHere > div,
+.playHere2 > div {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0;
+    min-height: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+    :root {
+        --board-size: 45vw;
+    }
+}
+/* Main game layout */
+.container {
+    width: 100%;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: clamp(8px, 2vw, 24px);
+}
+
+/* Player and AI labels */
+.userGuide {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* Game area */
+.duelZone {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(8px, 2vw, 24px);
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    align-items: start;
+}
+
+/* Ship selection area */
+.shipTrans {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(5px, 1vw, 15px);
+}
+
+/* Both boards */
+.playHere,
+.playHere2 {
+    width: 100% !important;
+    max-width: 690px;
+    aspect-ratio: 1 / 1;
+    height: auto !important;
+    min-width: 0;
+
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+
+    flex: none !important;
+    box-sizing: border-box;
+}
+
+/* Individual cells */
+.playHere > div,
+.playHere2 > div {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    box-sizing: border-box;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+    .duelZone {
+        gap: 12px;
+    }
+
+    .shipTrans {
+        gap: 8px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 500px) {
+    .container {
+        padding: 6px;
+    }
+
+    .duelZone {
+        gap: 6px;
+    }
+
+    .userGuide {
+        font-size: 14px;
+    }
+
+    .shipTrans {
+        gap: 4px;
+    }
+}
+.shipTrans > div {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+}
+
+.shipTrans > div:active {
+    cursor: grabbing;
+}
+
+.playHere,
+.playHere2 {
+    touch-action: none;
+}
+.shipTrans .drag {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+}
+
+.drag-preview {
+    pointer-events: none;
+}
+.drag {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+}
+
+.dragging {
+    opacity: 0.5;
+}
+
+.hovered {
+    outline: 2px solid yellow;
+}
+.playHere2 {
+    touch-action: none;
+}
+.playHere2 .block:hover::after {
+    content: "✕";
+    color: red;
+    font-size: clamp(14px, 2vw, 32px);
+    font-weight: bold;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
 }
