@@ -178,137 +178,120 @@ function myPage() {
     }
     rotateBtn.addEventListener('click', rotate)
 
-    function draggables() {
-        let ships = document.querySelectorAll('#drag')
-        ships.forEach(ship => ship.addEventListener('dragstart', dragStart))
-        player.forEach(array => array.forEach(square => square.addEventListener('dragstart', dragStart)))
-        player.forEach(array => array.forEach(square => square.addEventListener('dragover', dragOver)))
-        player.forEach(array => array.forEach(square => square.addEventListener('dragenter', dragEnter)))
-        player.forEach(array => array.forEach(square => square.addEventListener('dragleave', dragLeave)))
-        player.forEach(array => array.forEach(square => square.addEventListener('drop', dragDrop)))
-        player.forEach(array => array.forEach(square => square.addEventListener('dragend', dragEnd)))
-        let selectedShipNameWithIndex;
-        let draggedShip;
-        let draggedShipLength;
 
-        ships.forEach(ship => ship.addEventListener('mousedown', (e) => {
-            selectedShipNameWithIndex = e.target.id
-            draggedShipLength = e.target.childElementCount
-        }))
+function draggables() {
+    const ships = document.querySelectorAll('.shipTrans .drag');
 
-        function dragStart() {
-            draggedShip = this
-            draggedShipLength = this.children.length
-            return draggedShipLength
-        }
+    let draggedShip = null;
+    let draggedShipLength = 0;
 
-        function dragOver(e) {
-            e.preventDefault()
-        }
+    ships.forEach(ship => {
+        ship.addEventListener('dragstart', e => e.preventDefault());
 
-        function dragEnter(e) {
-            e.preventDefault()
-        }
+        ship.addEventListener('pointerdown', e => {
+            e.preventDefault();
 
-        function dragLeave() {
-            console.log('drag leave')
-        }
-        let kuck = 0
+            draggedShip = ship;
+            draggedShipLength = ship.children.length;
 
-        function dragDrop(e) {
-            let sub = document.querySelector('.sub')
-            let battle = document.querySelector('.battle')
-            let carri = document.querySelector('.carri')
-            let destroy = document.querySelector('.destroy')
-            let cruise = document.querySelector('.cruise')
-            let curr = e.target
-            let findx = parseInt(curr.getAttribute('x-axis'))
-            let findy = parseInt(curr.getAttribute('y-axis'))
-            let width = parseInt(draggedShipLength)
-            let check = []
-            for (let n = 0; n < width; n++) {
-                if (option) {
-                    if ((10 < (findx + width))) {
-                        e.preventDefault()
-                    } else {
-                        check.push(player[findy][findx + n].classList.contains('took'))
-                    }
-                } else if (!option) {
-                    if ((10 < (findy + width))) {
-                        e.preventDefault()
-                    } else {
-                        check.push(player[findy + n][findx].classList.contains('took'))
-                    }
-                }
+            ship.classList.add('dragging');
+        });
+    });
 
-            }
+    function pointerMove(e) {
+        if (!draggedShip) return;
 
-            if (!check.includes(true)) {
-                for (let n = 0; n < width; n++) {
-                    if (option && !(10 < (findx + width))) {
-                        if (width === 5) {
-                            player[findy][findx + n].classList.add('took', 'carrier')
-                            carri.remove()
-                        } else if (width === 4) {
-                            player[findy][findx + n].classList.add('took', 'battleship')
-                            battle.remove()
-                        } else if (width === 3) {
-                            if (kuck < 3) {
-                                player[findy][findx + n].classList.add('took', 'submarine')
-                                sub.remove()
-                                kuck++
-                            } else {
-                                player[findy][findx + n].classList.add('took', 'cruiser')
-                                cruise.remove()
-                            }
-                        } else if (width === 2) {
-                            player[findy][findx + n].classList.add('took', 'destroyer')
-                            destroy.remove()
-                        }
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const cell = target?.closest('.playHere .block');
 
-                    } else if (!option && !(10 < (findy + width))) {
-                        if (width === 5) {
-                            player[findy + n][findx].classList.add('took', 'carrier')
-                            carri.remove()
-                        } else if (width === 4) {
-                            player[findy + n][findx].classList.add('took', 'battleship')
-                            battle.remove()
-                        } else if (width === 3) {
-                            if (kuck < 3) {
-                                player[findy + n][findx].classList.add('took', 'submarine')
-                                sub.remove()
-                                kuck++
-                            } else {
-                                player[findy + n][findx].classList.add('took', 'cruiser')
-                                cruise.remove()
-                            }
-                        } else if (width === 2) {
-                            player[findy + n][findx].classList.add('took', 'destroyer')
-                            destroy.remove()
-                        }
-                    }
-                }
-            } else {
-                check = []
-                e.preventDefault()
-            }
-            check = []
-        }
+        document.querySelectorAll('.hovered').forEach(square => {
+            square.classList.remove('hovered');
+        });
 
-
-        function dragEnd() {
-            console.log('dragend')
+        if (cell) {
+            cell.classList.add('hovered');
         }
     }
 
-    draggables()
+    function pointerUp(e) {
+        if (!draggedShip) return;
+
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const cell = target?.closest('.playHere .block');
+
+        if (cell) {
+            placeShip(cell);
+        }
+
+        draggedShip?.classList.remove('dragging');
+
+        document.querySelectorAll('.hovered').forEach(square => {
+            square.classList.remove('hovered');
+        });
+
+        draggedShip = null;
+        draggedShipLength = 0;
+    }
+
+    document.addEventListener('pointermove', pointerMove);
+    document.addEventListener('pointerup', pointerUp);
+    document.addEventListener('pointercancel', pointerUp);
+
+    function placeShip(cell) {
+        const x = Number(cell.getAttribute('x-axis'));
+        const y = Number(cell.getAttribute('y-axis'));
+
+        const width = draggedShipLength;
+        const horizontal = option;
+
+        if (horizontal && x + width > 10) return;
+        if (!horizontal && y + width > 10) return;
+
+        const squares = [];
+
+        for (let n = 0; n < width; n++) {
+            const square = horizontal
+                ? player[y][x + n]
+                : player[y + n][x];
+
+            if (square.classList.contains('took')) return;
+
+            squares.push(square);
+        }
+
+        let shipClass;
+
+        if (draggedShip.classList.contains('carri')) {
+            shipClass = 'carrier';
+        } else if (draggedShip.classList.contains('battle')) {
+            shipClass = 'battleship';
+        } else if (draggedShip.classList.contains('cruise')) {
+            shipClass = 'cruiser';
+        } else if (draggedShip.classList.contains('sub')) {
+            shipClass = 'submarine';
+        } else if (draggedShip.classList.contains('destroy')) {
+            shipClass = 'destroyer';
+        }
+
+        if (!shipClass) return;
+
+        squares.forEach(square => {
+            square.classList.add('took', shipClass);
+        });
+
+        draggedShip.remove();
+    }
+}
+draggables();
+
+
 
 
     document.querySelector('.start').addEventListener('click', gameStart)
     let bros = 0
 
     function gameStart() {
-        let bruh = document.querySelectorAll('#drag')
+        let bruh = document.querySelectorAll('.drag')
         if (bruh.length === 0) {
             bros++
             document.querySelector('.start').style.visibility = 'hidden'
@@ -322,57 +305,60 @@ function myPage() {
     ai.forEach(array => array.forEach(square => square.addEventListener('click', game)))
     let turn = 'player'
 
-    let carriPl = 5
-    let battPl = 4
-    let cruiPl = 3
-    let destPl = 2
-    let subPl = 3
-    let carriC = 5
-    let battC = 4
-    let cruiC = 3
-    let destC = 2
-    let subC = 3
+    let carriPl = { life: 5 }
+    let battPl = { life: 4 }
+    let cruiPl = { life: 3 }
+    let destPl = { life: 2 }
+    let subPl = { life: 3 }
+
+    let carriC = { life: 5 }
+    let battC = { life: 4 }
+    let cruiC = { life: 3 }
+    let destC = { life: 2 }
+    let subC = { life: 3 }
 
     function checkAll() {
         let words = document.querySelector('.wordState')
-        if (carriPl === 0) {
+        if (carriPl.life === 0) {
             words.innerHTML = 'Players Carrier Has Sunk'
-            carriPl--
-        } else if (battPl === 0) {
+            carriPl.life--
+        } else if (battPl.life === 0) {
             words.innerHTML = 'Players Battleship Has Sunk'
-            battPl--
-        } else if (cruiPl === 0) {
+            battPl.life--
+        } else if (cruiPl.life === 0) {
             words.innerHTML = 'Players Cruiser Has Sunk'
-            cruiPl--
-        } else if (subPl === 0) {
+            cruiPl.life--
+        } else if (subPl.life === 0) {
             words.innerHTML = 'Players Submarine Has Sunk'
-            subPl--
-        } else if (destPl === 0) {
+            subPl.life--
+        } else if (destPl.life === 0) {
             words.innerHTML = 'Players Destroyer Has Sunk'
-            destPl--
+            destPl.life--
         }
-        if (carriC === 0) {
+        if (carriC.life === 0) {
             words.innerHTML = 'Computers Carrier Has Sunk'
-            carriC--
-        } else if (destC === 0) {
+            carriC.life--
+        } else if (destC.life === 0) {
             words.innerHTML = 'Computers Destroyer Has Sunk'
-            destC--
-        } else if (battC === 0) {
+            destC.life--
+        } else if (battC.life === 0) {
             words.innerHTML = 'Computers Battleship Has Sunk'
-            battC--
-        } else if (cruiC === 0) {
+            battC.life--
+        } else if (cruiC.life === 0) {
             words.innerHTML = 'Computers Cruiser Has Sunk'
-            cruiC--
-        } else if (subC === 0) {
+            cruiC.life--
+        } else if (subC.life === 0) {
             words.innerHTML = 'Computers Submarine Has Sunk'
-            subC--
+            subC.life--
         }
-        if (carriPl <= 0 && battPl <= 0 && subPl <= 0 && cruiPl <= 0 && destPl <= 0) {
+        if (carriPl.life <= 0 && battPl.life <= 0 && subPl.life <= 0 && cruiPl.life <= 0 && destPl.life <= 0) {
             words.innerHTML = 'Computer Has Won'
             turn = 'won'
-        } else if (carriC <= 0 && battC <= 0 && subC <= 0 && cruiC <= 0 && destC <= 0) {
+            bros=0;
+        } else if (carriC.life <= 0 && battC.life <= 0 && subC.life <= 0 && cruiC.life <= 0 && destC.life <= 0) {
             words.innerHTML = 'Player Has Won'
             turn = 'won'
+            bros=0;
         }
 
 
@@ -386,1098 +372,265 @@ function myPage() {
                 if (curr.classList.contains('took') && !curr.classList.contains('boom') && !curr.classList.contains('miss')) {
                     curr.classList.add('boom')
                     if (curr.classList.contains('carrier')) {
-                        carriC--
+                        carriC.life--
                     } else if (curr.classList.contains('battleship')) {
-                        battC--
+                        battC.life--
                     } else if (curr.classList.contains('submarine')) {
-                        subC--
+                        subC.life--
                     } else if (curr.classList.contains('cruiser')) {
-                        cruiC--
+                        cruiC.life--
                     } else if (curr.classList.contains('destroyer')) {
-                        destC--
+                        destC.life--
                     }
-                    turn = 'computer'
                     checkAll()
-                    computer()
                 } else if (!curr.classList.contains('boom') && !curr.classList.contains('miss')) {
                     curr.classList.add('miss')
                     turn = 'computer'
-                    computer()
+                    return computer()
                 }
             }
         }
     }
-    let smart= false
-    let save=[]
-    let previous=[]
-    let know=''
-    let where=''
-    function computer() {
-        checkAll()
-        let starth = (Math.floor(Math.random() * 10) );
-        let startv;
-        if (starth % 2 == 0) {
-                startv = 1 + Math.floor(Math.random() * 5) * 2
-        }
-        else {
-            startv = Math.floor(Math.random() * 5) * 2;
-        }
+    let save = []
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    async function computer() {
         if (turn === 'computer') {
-            if(smart===false){
-            if (player[starth][startv].classList.contains('took') 
-            && !player[starth][startv].classList.contains('boom') && !player[starth][startv].classList.contains('miss')) {
-
-                player[starth][startv].classList.add('boom')
-                player[starth][startv].classList.remove('took')
-                if (player[starth][startv].classList.contains('carrier')) {
-                    carriPl--
-                    know='carrier'
-                } else if (player[starth][startv].classList.contains('battleship')) {
-                    battPl--
-                    know='battleship'
-                } else if (player[starth][startv].classList.contains('submarine')) {
-                    subPl--
-                    know='submarine'
-                } else if (player[starth][startv].classList.contains('cruiser')) {
-                    cruiPl--
-                    know='cruiser'
-                } else if (player[starth][startv].classList.contains('destroyer')) {
-                    destPl--
-                    know='destroyer'
+            if(save.length < 1 ){
+                let starth = (Math.floor(Math.random() * 10) );
+                let startv;
+                if (starth % 2 == 0) {
+                    startv = 1 + Math.floor(Math.random() * 5) * 2
                 }
-                save.push({x:startv,y:starth,ship:know})
-                smart=true
-                checkAll()
-                turn = 'player'
-            } else if (!player[starth][startv].classList.contains('boom') && !player[starth][startv].classList.contains('miss')) {
-                player[starth][startv].classList.add('miss')
-                turn = 'player'
-            } else {
-                return computer()
-            }
-        }else if(smart===true && where===''){
-             if(destPl <= 0 && know==='destroyer'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
+                 else {
+                    startv = Math.floor(Math.random() * 5) * 2;
                 }
-            }else if(carriPl <=0 && know==='carrier'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }else if(battPl<=0 && know==='battleship'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }else if(cruiPl<=0 && know==='cruiser'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }else if(subPl<=0 && know==='submarine'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }
-
-            if(save[0].x===0 && save[0].y===0){
-                if (!player[save[0].y+1][save[0].x].classList.contains('boom') && !player[save[0].y+1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y+1][save[0].x].classList.contains('took') ){
-                        player[save[0].y+1][save[0].x].classList.add('boom')
-                        player[save[0].y+1][save[0].x].classList.remove('took')
-                        if( player[save[0].y+1][save[0].x].classList.contains(know)){
-                            where='down'
-                            previous.push({x:save[0].x,y:save[0].y+1})
-                        }else{
-                            if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'carrier'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'battleship'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'submarine'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'cruiser'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y+1][save[0].x].classList.add('miss')
-                        turn = 'player'
+                if (player[starth][startv].classList.contains('took')) {
+                    player[starth][startv].classList.add('boom')
+                    player[starth][startv].classList.remove('took')
+                    if (player[starth][startv].classList.contains('carrier')) {
+                        carriPl.life--
+                        save.push({x:startv,y:starth, name: 'carrier',  dir: [checkUp, checkDown, checkLeft, checkRight], life: carriPl})
+                    } else if (player[starth][startv].classList.contains('battleship')) {
+                        battPl.life--
+                        save.push({x:startv,y:starth,name:'battleship',  dir: [checkUp, checkDown, checkLeft, checkRight], life: battPl})
+                    } else if (player[starth][startv].classList.contains('submarine')) {
+                        subPl.life--
+                        save.push({x:startv,y:starth, name: 'submarine',  dir: [checkUp, checkDown, checkLeft, checkRight], life: subPl})
+                    } else if (player[starth][startv].classList.contains('cruiser')) {
+                        cruiPl.life--
+                        save.push({x:startv,y:starth, name: 'cruiser', dir: [checkUp, checkDown, checkLeft, checkRight], life: cruiPl})
+                    } else if (player[starth][startv].classList.contains('destroyer')) {
+                        destPl.life--
+                        save.push({x:startv,y:starth, name: 'destroyer',  dir: [checkUp, checkDown, checkLeft, checkRight], life: destPl})
                     }
-                }else if (!player[save[0].y][save[0].x+1].classList.contains('boom') && !player[save[0].y][save[0].x+1].classList.contains('miss')){
-                    if(player[save[0].y][save[0].x+1].classList.contains('took') ){
-                        player[save[0].y][save[0].x+1].classList.add('boom')
-                        player[save[0].y][save[0].x+1].classList.remove('took')
-                        if(player[save[0].y][save[0].x+1].classList.contains(know)){
-                            where='right'
-                            previous.push({x:save[0].x+1,y:save[0].y})
-                        }else{
-                            if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'carrier'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'battleship'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'submarine'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'cruiser'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y][save[0].x+1].classList.add('miss')
-                        turn = 'player'
-                    }
-                }
-            }else if(save[0].x===9 && save[0].y===0){      
-                    if (!player[save[0].y+1][save[0].x].classList.contains('boom') && !player[save[0].y+1][save[0].x].classList.contains('miss')){
-                        if(player[save[0].y+1][save[0].x].classList.contains('took') ){
-                            player[save[0].y+1][save[0].x].classList.add('boom')
-                            player[save[0].y+1][save[0].x].classList.remove('took')
-                            if( player[save[0].y+1][save[0].x].classList===know){
-                                where='down'
-                                previous.push({x:save[0].x,y:save[0].y+1})
-                            }else{
-                                save.push({x:save[0].x,y:save[0].y+1,ship:player[save[0].y+1][save[0].x].classList})
-                            } 
-                            if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                                carriPl--
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                                battPl--
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                                subPl--
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                                cruiPl--
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                                destPl--
-                            }  
-                            checkAll()
-                            turn = 'player'
-                        }else{
-                            player[save[0].y+1][save[0].x].classList.add('miss')
-                            turn = 'player'
-                        }
-                    }else if(player[save[0].y][save[0].x-1].classList.contains('took') ){
-                        player[save[0].y][save[0].x-1].classList.add('boom')
-                        player[save[0].y][save[0].x-1].classList.remove('took')
-                    
-                        if(player[save[0].y][save[0].x-1].classList.contains(know)){
-                            where='left'
-                            previous.push({x:save[0].x-1,y:save[0].y})
-                        }else{
-                            if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'carrier'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'battleship'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'submarine'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'cruiser'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y][save[0].x-1].classList.add('miss')
-                        turn = 'player'
-                    }
-            }else if(save[0].x===0 && save[0].y===9){
-                if (!player[save[0].y-1][save[0].x].classList.contains('boom') && !player[save[0].y-1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y-1][save[0].x].classList.contains('took') ){
-                        player[save[0].y-1][save[0].x].classList.add('boom')
-                        player[save[0].y-1][save[0].x].classList.remove('took')
-                        if( player[save[0].y-1][save[0].x].classList.contains(know)){
-                            where='up'
-                            previous.push({x:save[0].x,y:save[0].y-1})
-                        }else{
-                            if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'carrier'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'battleship'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'submarine'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'cruiser'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y-1][save[0].x].classList.add('miss')
-                        turn = 'player'
-                    }
-                }else if (!player[save[0].y][save[0].x+1].classList.contains('boom') && !player[save[0].y][save[0].x+1].classList.contains('miss')){
-                    if(player[save[0].y][save[0].x+1].classList.contains('took') ){
-                        player[save[0].y][save[0].x+1].classList.add('boom')
-                        player[save[0].y][save[0].x+1].classList.remove('took')
-                        if(player[save[0].y][save[0].x+1].classList.contains(know)){
-                            where='right'
-                            previous.push({x:save[0].x+1,y:save[0].y})
-                        }else{
-                            if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'carrier'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'battleship'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'submarine'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'cruiser'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y][save[0].x+1].classList.add('miss')
-                        turn = 'player'
-                    }
-                }
-            }else if(save[0].x===9 && save[0].y===9){
-                if (!player[save[0].y-1][save[0].x].classList.contains('boom') && !player[save[0].y-1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y-1][save[0].x].classList.contains('took') ){
-                        player[save[0].y-1][save[0].x].classList.add('boom')
-                        player[save[0].y-1][save[0].x].classList.remove('took')
-                        if( player[save[0].y-1][save[0].x].classList.contains(know)){
-                            where='up'
-                            previous.push({x:save[0].x,y:save[0].y-1})
-                        }else{
-                            if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'carrier'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'battleship'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'submarine'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'cruiser'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y-1][save[0].x].classList.add('miss')
-                        turn = 'player'
-                    }
-                }else if(player[save[0].y][save[0].x-1].classList.contains('took') ){
-                    player[save[0].y][save[0].x-1].classList.add('boom')
-                    player[save[0].y][save[0].x-1].classList.remove('took')
-                    if(player[save[0].y][save[0].x-1].classList.contains(know)){
-                        where='left'
-                        previous.push({x:save[0].x-1,y:save[0].y})
-                    }else{
-                        if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                            save.push({x:save[0].x-1,y:save[0].y,ship:'carrier'})
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                            save.push({x:save[0].x-1,y:save[0].y,ship:'battleship'})
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                            save.push({x:save[0].x-1,y:save[0].y,ship:'submarine'})
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                            save.push({x:save[0].x-1,y:save[0].y,ship:'cruiser'})
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                            save.push({x:save[0].x-1,y:save[0].y,ship:'destroyer'})
-                        }  
-                    } 
-                    if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                        carriPl--
-                    } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                        battPl--
-                    } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                        subPl--
-                    } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                        cruiPl--
-                    } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                        destPl--
-                    }  
                     checkAll()
+                    return computer();
+                } else if (!player[starth][startv].classList.contains('boom') && !player[starth][startv].classList.contains('miss')) {
+                    player[starth][startv].classList.add('miss')
                     turn = 'player'
-                }else{
-                    player[save[0].y][save[0].x-1].classList.add('miss')
-                    turn = 'player'
+                } else {
+                    return computer()
                 }
-            }else if(save[0].x===0 || save[0].x===9){
-                if (!player[save[0].y+1][save[0].x].classList.contains('boom') && !player[save[0].y+1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y+1][save[0].x].classList.contains('took') ){
-                        player[save[0].y+1][save[0].x].classList.add('boom')
-                        player[save[0].y+1][save[0].x].classList.remove('took')
-                         if( player[save[0].y+1][save[0].x].classList.contains(know)){
-                            where='down'
-                            previous.push({x:save[0].x,y:save[0].y+1})
-                        }else{
-                            if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'carrier'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'battleship'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'submarine'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'cruiser'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'destroyer'})
-                            }  
-                        }  
-                        if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
+            } else {
+                let current = save.pop()
+                let saver = 1
+                while(current.dir.length > 0){
+                    await sleep(500);
+                    let getDir = current.dir.pop()
+                    let getAns = getDir(current, saver)
+                    if(current.life.life > 0 && getAns === 1){
+                        current.dir.push(getDir)
+                        saver++
+                    }else if(getAns === 0){
+                        break;
                     }else{
-                        player[save[0].y+1][save[0].x].classList.add('miss')
-                        turn = 'player'
-                    }
-                } else if (!player[save[0].y-1][save[0].x].classList.contains('boom') && !player[save[0].y-1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y-1][save[0].x].classList.contains('took') ){
-                        player[save[0].y-1][save[0].x].classList.add('boom')
-                        player[save[0].y-1][save[0].x].classList.remove('took')
-                        if( player[save[0].y-1][save[0].x].classList.contains(know)){
-                            where='up'
-                            previous.push({x:save[0].x,y:save[0].y-1})
-                        }else{
-                            if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'carrier'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'battleship'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'submarine'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'cruiser'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y-1][save[0].x].classList.add('miss')
-                        turn = 'player'
-                    }
-                }else if(save[0].x===0 && !player[save[0].y][save[0].x+1].classList.contains('boom') && !player[save[0].y][save[0].x+1].classList.contains('miss')){
-                        if(player[save[0].y][save[0].x+1].classList.contains('took') ){
-                            player[save[0].y][save[0].x+1].classList.add('boom')
-                            player[save[0].y][save[0].x+1].classList.remove('took')
-                            if(player[save[0].y][save[0].x+1].classList.contains(know)){
-                                where='right'
-                                previous.push({x:save[0].x+1,y:save[0].y})
-                            }else{
-                                if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                                    save.push({x:save[0].x+1,y:save[0].y,ship:'carrier'})
-                                } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                                    save.push({x:save[0].x+1,y:save[0].y,ship:'battleship'})
-                                } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                                    save.push({x:save[0].x+1,y:save[0].y,ship:'submarine'})
-                                } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                                    save.push({x:save[0].x+1,y:save[0].y,ship:'cruiser'})
-                                } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                                    save.push({x:save[0].x+1,y:save[0].y,ship:'destroyer'})
-                                }  
-                            } 
-                            if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                                carriPl--
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                                battPl--
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                                subPl--
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                                cruiPl--
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                                destPl--
-                            }  
-                            checkAll()
-                            turn = 'player'
-                        }else{
-                            player[save[0].y][save[0].x+1].classList.add('miss')
-                            turn = 'player'
+                        saver = 1
+                        if(current.life.life < 1){
+                            return computer()
                         }
-                    
-                }else{
-                    if(player[save[0].y][save[0].x-1].classList.contains('took') ){
-                        player[save[0].y][save[0].x-1].classList.add('boom')
-                        player[save[0].y][save[0].x-1].classList.remove('took')
-                        if(player[save[0].y][save[0].x-1].classList.contains(know)){
-                            where='left'
-                            previous.push({x:save[0].x-1,y:save[0].y})
-                        }else{
-                            if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'carrier'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'battleship'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'submarine'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'cruiser'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y][save[0].x-1].classList.add('miss')
-                        turn = 'player'
                     }
                 }
-            }else if(save[0].y===0 || save[0].y===9){
-                if (!player[save[0].y][save[0].x+1].classList.contains('boom') && !player[save[0].y][save[0].x+1].classList.contains('miss')){
-                    if(player[save[0].y][save[0].x+1].classList.contains('took') ){
-                        player[save[0].y][save[0].x+1].classList.add('boom')
-                        player[save[0].y][save[0].x+1].classList.remove('took')
-                        if(player[save[0].y][save[0].x+1].classList.contains(know)){
-                            where='right'
-                            previous.push({x:save[0].x+1,y:save[0].y})
-                        }else{
-                            if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'carrier'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'battleship'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'submarine'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'cruiser'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y][save[0].x+1].classList.add('miss')
-                        turn = 'player'
-                    }
-                }else if(save[0].y===0 && !player[save[0].y+1][save[0].x].classList.contains('boom') && !player[save[0].y+1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y+1][save[0].x].classList.contains('took') ){
-                        player[save[0].y+1][save[0].x].classList.add('boom')
-                        player[save[0].y+1][save[0].x].classList.remove('took')
-                         if( player[save[0].y+1][save[0].x].classList.contains(know)){
-                            where='down'
-                            previous.push({x:save[0].x,y:save[0].y+1})
-                        }else{
-                            if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'carrier'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'battleship'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'submarine'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'cruiser'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'destroyer'})
-                            }  
-                        }  
-                        if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y+1][save[0].x].classList.add('miss')
-                        turn = 'player'
-                    }
-                }else if(save[0].y===9 && !player[save[0].y-1][save[0].x].classList.contains('boom') && !player[save[0].y-1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y-1][save[0].x].classList.contains('took') ){
-                        player[save[0].y-1][save[0].x].classList.add('boom')
-                        player[save[0].y-1][save[0].x].classList.remove('took')
-                        if( player[save[0].y-1][save[0].x].classList.contains(know)){
-                            where='up'
-                            previous.push({x:save[0].x,y:save[0].y-1})
-                        }else{
-                            if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'carrier'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'battleship'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'submarine'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'cruiser'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y-1][save[0].x].classList.add('miss')
-                        turn = 'player'
-                    }
-                }else{
-                    if(player[save[0].y][save[0].x-1].classList.contains('took') ){
-                        player[save[0].y][save[0].x-1].classList.add('boom')
-                        player[save[0].y][save[0].x-1].classList.remove('took')
-                        if(player[save[0].y][save[0].x-1].classList.contains(know)){
-                            where='left'
-                            previous.push({x:save[0].x-1,y:save[0].y})
-                        }else{
-                            if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'carrier'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'battleship'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'submarine'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'cruiser'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y][save[0].x-1].classList.add('miss')
-                        turn = 'player'
-                    }
+                if(current.dir.length > 0 && current.life.life > 0){
+                    save.push(current)
                 }
-            }else{
-                if (!player[save[0].y+1][save[0].x].classList.contains('boom') && !player[save[0].y+1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y+1][save[0].x].classList.contains('took') ){
-                        player[save[0].y+1][save[0].x].classList.add('boom')
-                        player[save[0].y+1][save[0].x].classList.remove('took')
-                        if( player[save[0].y+1][save[0].x].classList.contains(know)){
-                            where='down'
-                            previous.push({x:save[0].x,y:save[0].y+1})
-                        }else{
-                            if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'carrier'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'battleship'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'submarine'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'cruiser'})
-                            } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y+1,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y+1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y+1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y+1][save[0].x].classList.add('miss')
-                        turn = 'player'
-                    }
-                } else if (!player[save[0].y-1][save[0].x].classList.contains('boom') && !player[save[0].y-1][save[0].x].classList.contains('miss')){
-                    if(player[save[0].y-1][save[0].x].classList.contains('took') ){
-                        player[save[0].y-1][save[0].x].classList.add('boom')
-                        player[save[0].y-1][save[0].x].classList.remove('took')
-                        if( player[save[0].y-1][save[0].x].classList.contains(know)){
-                            where='up'
-                            previous.push({x:save[0].x,y:save[0].y-1})
-                        }else{
-                            if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'carrier'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'battleship'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'submarine'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'cruiser'})
-                            } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                                save.push({x:save[0].x,y:save[0].y-1,ship:'destroyer'})
-                            }  
-                        }  
-                        if (player[save[0].y-1][save[0].x].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y-1][save[0].x].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y-1][save[0].x].classList.add('miss')
-                        turn = 'player'
-                    }
-                }else if (!player[save[0].y][save[0].x+1].classList.contains('boom') && !player[save[0].y][save[0].x+1].classList.contains('miss')){
-                    if(player[save[0].y][save[0].x+1].classList.contains('took') ){
-                        player[save[0].y][save[0].x+1].classList.add('boom')
-                        player[save[0].y][save[0].x+1].classList.remove('took')
-                        if(player[save[0].y][save[0].x+1].classList.contains(know)){
-                            where='right'
-                            previous.push({x:save[0].x+1,y:save[0].y})
-                        }else{
-                            if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'carrier'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'battleship'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'submarine'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'cruiser'})
-                            } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                                save.push({x:save[0].x+1,y:save[0].y,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y][save[0].x+1].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y][save[0].x+1].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y][save[0].x+1].classList.add('miss')
-                        turn = 'player'
-                    }
-                }else{
-                    if(player[save[0].y][save[0].x-1].classList.contains('took') ){
-                        player[save[0].y][save[0].x-1].classList.add('boom')
-                        player[save[0].y][save[0].x-1].classList.remove('took')
-                        if(player[save[0].y][save[0].x-1].classList.contains(know)){
-                            where='left'
-                            previous.push({x:save[0].x-1,y:save[0].y})
-                        }else{
-                            if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'carrier'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'battleship'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'submarine'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'cruiser'})
-                            } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                                save.push({x:save[0].x-1,y:save[0].y,ship:'destroyer'})
-                            }  
-                        } 
-                        if (player[save[0].y][save[0].x-1].classList.contains('carrier')) {
-                            carriPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('battleship')) {
-                            battPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('submarine')) {
-                            subPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('cruiser')) {
-                            cruiPl--
-                        } else if (player[save[0].y][save[0].x-1].classList.contains('destroyer')) {
-                            destPl--
-                        }  
-                        checkAll()
-                        turn = 'player'
-                    }else{
-                        player[save[0].y][save[0].x-1].classList.add('miss')
-                        turn = 'player'
-                    }
-
-                }
-            }
-        }else{     
-            if(destPl <= 0 && know==='destroyer'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }else if(carriPl <=0 && know==='carrier'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }else if(battPl <=0 && know==='battleship'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }else if(cruiPl<=0 && know==='cruiser'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }else if(subPl<=0 && know==='submarine'){
-                save.splice(0,1)
-                if(save.length===0){
-                    smart= false
-                    know=''
-                    where=''
-                    previous=[]
-                    computer()
-                }else{
-                    know=save[0].ship
-                    where=''
-                    previous=[]
-                    computer()
-                }
-            }
-   
-            if(where==='down'){        
-                if(!player[previous[0].y][previous[0].x].classList.contains('miss') && !player[previous[0].y][previous[0].x].classList.contains('boom')){  
-                    if(player[previous[0].y][previous[0].x].classList.contains('took')){   
-                player[previous[0].y+1][previous[0].x].classList.add('boom')
-                player[previous[0].y+1][previous[0].x].classList.remove('took')
-           
-                if ( player[previous[0].y+1][previous[0].x].classList.contains('carrier')) {
-                    carriPl--
-                } else if (player[previous[0].y+1][previous[0].x].classList.contains('battleship')) {
-                    battPl--
-                } else if (player[previous[0].y+1][previous[0].x].classList.contains('submarine')) {
-                    subPl--
-                } else if (player[previous[0].y+1][previous[0].x].classList.contains('cruiser')) {
-                    cruiPl--
-                } else if (player[previous[0].y+1][previous[0].x].classList.contains('destroyer')) {
-                    destPl--
-                }
-                checkAll()
-                previous.push({x:previous[0].x,y:previous[0].y+1})
-                previous.splice(0,1)
-                turn = 'player'
-            }else{
-                player[previous[0].y+1][previous[0].x].classList.add('miss')
-                previous.push({x:previous[0].x,y:previous[0].y+1})
-                previous.splice(0,1)
                 turn = 'player'
             }
-            }else{
-                where=''
-                previous=[]
-                computer()
-            }
-            }else if(where==='up'){
-                if(!player[previous[0].y][previous[0].x].classList.contains('miss') && !player[previous[0].y-1][previous[0].x].classList.contains('miss') && !player[previous[0].y-1][previous[0].x].classList.contains('boom')){ 
-                    if(player[previous[0].y-1][previous[0].x].classList.contains('took')){     
-                player[previous[0].y-1][previous[0].x].classList.add('boom')
-                player[previous[0].y-1][previous[0].x].classList.remove('took')
-                if ( player[previous[0].y-1][previous[0].x].classList.contains('carrier')) {
-                    carriPl--
-                } else if (player[previous[0].y-1][previous[0].x].classList.contains('battleship')) {
-                    battPl--
-                } else if (player[previous[0].y-1][previous[0].x].classList.contains('submarine')) {
-                    subPl--
-                } else if (player[previous[0].y-1][previous[0].x].classList.contains('cruiser')) {
-                    cruiPl--
-                } else if (player[previous[0].y-1][previous[0].x].classList.contains('destroyer')) {
-                    destPl--
-                }
-                checkAll()
-                previous.push({x:previous[0].x,y:previous[0].y-1})
-                previous.splice(0,1)
-                turn = 'player'
-            }else{
-                player[previous[0].y-1][previous[0].x].classList.add('miss')
-                previous.push({x:previous[0].x,y:previous[0].y-1})
-                previous.splice(0,1)
-                turn = 'player'
-            }
-            }else{
-                where=''
-                previous=[]
-                computer()
-            }
-            }else if(where==='right'){
-                if(!player[previous[0].y][previous[0].x].classList.contains('miss') && !player[previous[0].y][previous[0].x+1].classList.contains('miss') && !player[previous[0].y][previous[0].x+1].classList.contains('boom')){   
-                    if(player[previous[0].y][previous[0].x+1].classList.contains('took')){  
-                player[previous[0].y][previous[0].x+1].classList.add('boom')
-                player[previous[0].y][previous[0].x+1].classList.remove('took')
-                if ( player[previous[0].y][previous[0].x+1].classList.contains('carrier')) {
-                    carriPl--
-                } else if (player[previous[0].y][previous[0].x+1].classList.contains('battleship')) {
-                    battPl--
-                } else if (player[previous[0].y][previous[0].x+1].classList.contains('submarine')) {
-                    subPl--
-                } else if (player[previous[0].y][previous[0].x+1].classList.contains('cruiser')) {
-                    cruiPl--
-                } else if (player[previous[0].y][previous[0].x+1].classList.contains('destroyer')) {
-                    destPl--
-                }
-                checkAll()
-                previous.push({x:previous[0].x+1,y:previous[0].y})
-                previous.splice(0,1)
-                turn = 'player'
-            }else{
-                player[previous[0].y][previous[0].x+1].classList.add('miss')
-                previous.push({x:previous[0].x+1,y:previous[0].y})
-                previous.splice(0,1)
-                turn = 'player'
-            }
-            }else{
-                previous=[]
-                where=''
-                computer()
-            }
-            }else{
-                if(!player[previous[0].y][previous[0].x].classList.contains('miss') && !player[previous[0].y][previous[0].x-1].classList.contains('miss') && !player[previous[0].y][previous[0].x-1].classList.contains('boom')){  
-             if(player[previous[0].y][previous[0].x-1].classList.contains('took')){ 
-                player[previous[0].y][previous[0].x-1].classList.add('boom')
-                player[previous[0].y][previous[0].x-1].classList.remove('took')
-                if ( player[previous[0].y][previous[0].x-1].classList.contains('carrier')) {
-                    carriPl--
-                } else if (player[previous[0].y][previous[0].x-1].classList.contains('battleship')) {
-                    battPl--
-                } else if (player[previous[0].y][previous[0].x-1].classList.contains('submarine')) {
-                    subPl--
-                } else if (player[previous[0].y][previous[0].x-1].classList.contains('cruiser')) {
-                    cruiPl--
-                } else if (player[previous[0].y][previous[0].x-1].classList.contains('destroyer')) {
-                    destPl--
-                }
-                checkAll()
-                previous.push({x:previous[0].x-1,y:previous[0].y})
-                previous.splice(0,1)
-                turn = 'player'
-            }else{
-                player[previous[0].y][previous[0].x-1].classList.add('miss')
-                previous.push({x:previous[0].x-1,y:previous[0].y})
-                previous.splice(0,1)
-                turn = 'player'
-            }
-            }else{
-                previous=[]
-                where=''
-                computer()
-            }
-        }
-        }
         }
     }
-
+    function checkLeft(current, addder){
+                let starth = current.y
+                let startv = current.x - addder
+                if(startv > -1){
+                    if(player[starth][startv].classList.contains('took')){
+                    player[starth][startv].classList.add('boom')
+                    player[starth][startv].classList.remove('took')
+                    if(player[starth][startv].classList.contains(current.name)){
+                        current.life.life--
+                        checkAll()
+                        if(current.life.life < 1){
+                            return -1
+                        }
+                        return 1
+                    }
+                    else if (player[starth][startv].classList.contains('carrier')) {
+                        carriPl.life--
+                        save.push({x:startv,y:starth, name: 'carrier',  dir: [checkUp, checkDown, checkLeft, checkRight], life: carriPl})
+                    } else if (player[starth][startv].classList.contains('battleship')) {
+                        battPl.life--
+                        save.push({x:startv,y:starth,name:'battleship',  dir: [checkUp, checkDown, checkLeft, checkRight], life: battPl})
+                    } else if (player[starth][startv].classList.contains('submarine')) {
+                        subPl.life--
+                        save.push({x:startv,y:starth, name: 'submarine',  dir: [checkUp, checkDown, checkLeft, checkRight], life: subPl})
+                    } else if (player[starth][startv].classList.contains('cruiser')) {
+                        cruiPl.life--
+                        save.push({x:startv,y:starth, name: 'cruiser', dir: [checkUp, checkDown, checkLeft, checkRight], life: cruiPl})
+                    } else if (player[starth][startv].classList.contains('destroyer')) {
+                        destPl.life--
+                        save.push({x:startv,y:starth, name: 'destroyer',  dir: [checkUp, checkDown, checkLeft, checkRight], life: destPl})
+                    }
+                        checkAll()
+                        return -1;
+                    } 
+                     if(!player[starth][startv].classList.contains('boom') && !player[starth][startv].classList.contains('miss')){
+                        player[starth][startv].classList.add('miss')
+                        return 0
+                    }
+                    return -1
+                }else{
+                    return -1;
+                }
+    }
+    function checkRight(current, addder){
+        let starth = current.y
+        let startv = current.x + addder
+                if(startv < 10){
+                    if(player[starth][startv].classList.contains('took')){
+                        player[starth][startv].classList.add('boom')
+                        player[starth][startv].classList.remove('took')
+                        if(player[starth][startv].classList.contains(current.name)){
+                        current.life.life--
+                        checkAll()
+                        if(current.life.life < 1){
+                            return -1
+                        }
+                        return 1
+                    }
+                    else if (player[starth][startv].classList.contains('carrier')) {
+                        carriPl.life--
+                        save.push({x:startv,y:starth, name: 'carrier',  dir: [checkUp, checkDown, checkLeft, checkRight], life: carriPl})
+                    } else if (player[starth][startv].classList.contains('battleship')) {
+                        battPl.life--
+                        save.push({x:startv,y:starth,name:'battleship',  dir: [checkUp, checkDown, checkLeft, checkRight], life: battPl})
+                    } else if (player[starth][startv].classList.contains('submarine')) {
+                        subPl.life--
+                        save.push({x:startv,y:starth, name: 'submarine',  dir: [checkUp, checkDown, checkLeft, checkRight], life: subPl})
+                    } else if (player[starth][startv].classList.contains('cruiser')) {
+                        cruiPl.life--
+                        save.push({x:startv,y:starth, name: 'cruiser', dir: [checkUp, checkDown, checkLeft, checkRight], life: cruiPl})
+                    } else if (player[starth][startv].classList.contains('destroyer')) {
+                        destPl.life--
+                        save.push({x:startv,y:starth, name: 'destroyer',  dir: [checkUp, checkDown, checkLeft, checkRight], life: destPl})
+                    }
+                        checkAll()
+                        return -1;
+                    }
+                    if(!player[starth][startv].classList.contains('boom') && !player[starth][startv].classList.contains('miss')){
+                        player[starth][startv].classList.add('miss')
+                        return 0
+                    }
+                    return -1
+                }else{
+                    return -1;
+                }
+    }
+    function checkUp(current, addder){
+        let starth = current.y - addder
+        let startv = current.x
+        if(starth> -1){
+                    if(player[starth][startv].classList.contains('took')){
+                        player[starth][startv].classList.add('boom')
+                        player[starth][startv].classList.remove('took')
+                        if(player[starth][startv].classList.contains(current.name)){
+                        current.life.life--
+                        checkAll()
+                        if(current.life.life < 1){
+                            return -1
+                        }
+                        return 1
+                    }
+                    else if (player[starth][startv].classList.contains('carrier')) {
+                        carriPl.life--
+                        save.push({x:startv,y:starth, name: 'carrier',  dir: [checkUp, checkDown, checkLeft, checkRight], life: carriPl})
+                    } else if (player[starth][startv].classList.contains('battleship')) {
+                        battPl.life--
+                        save.push({x:startv,y:starth,name:'battleship',  dir: [checkUp, checkDown, checkLeft, checkRight], life: battPl})
+                    } else if (player[starth][startv].classList.contains('submarine')) {
+                        subPl.life--
+                        save.push({x:startv,y:starth, name: 'submarine',  dir: [checkUp, checkDown, checkLeft, checkRight], life: subPl})
+                    } else if (player[starth][startv].classList.contains('cruiser')) {
+                        cruiPl.life--
+                        save.push({x:startv,y:starth, name: 'cruiser', dir: [checkUp, checkDown, checkLeft, checkRight], life: cruiPl})
+                    } else if (player[starth][startv].classList.contains('destroyer')) {
+                        destPl.life--
+                        save.push({x:startv,y:starth, name: 'destroyer',  dir: [checkUp, checkDown, checkLeft, checkRight], life: destPl})
+                    }
+                        checkAll()
+                        return -1;
+                    }
+                    if(!player[starth][startv].classList.contains('boom') && !player[starth][startv].classList.contains('miss')){
+                        player[starth][startv].classList.add('miss')
+                        return 0
+                    }
+                    return -1
+                }else{
+                    return -1;
+                }
+    }
+    function checkDown(current, addder){
+        let starth = current.y + addder
+        let startv = current.x
+        if(starth < 10){
+                    if(player[starth][startv].classList.contains('took')){
+                    player[starth][startv].classList.add('boom')
+                    player[starth][startv].classList.remove('took')
+                    if(player[starth][startv].classList.contains(current.name)){
+                        current.life.life--
+                        checkAll()
+                        if(current.life.life < 1){
+                            return -1
+                        }
+                        return 1
+                    }
+                    else if (player[starth][startv].classList.contains('carrier')) {
+                        carriPl.life--
+                        save.push({x:startv,y:starth, name: 'carrier',  dir: [checkUp, checkDown, checkLeft, checkRight], life: carriPl})
+                    } else if (player[starth][startv].classList.contains('battleship')) {
+                        battPl.life--
+                        save.push({x:startv,y:starth,name:'battleship',  dir: [checkUp, checkDown, checkLeft, checkRight], life: battPl})
+                    } else if (player[starth][startv].classList.contains('submarine')) {
+                        subPl.life--
+                        save.push({x:startv,y:starth, name: 'submarine',  dir: [checkUp, checkDown, checkLeft, checkRight], life: subPl})
+                    } else if (player[starth][startv].classList.contains('cruiser')) {
+                        cruiPl.life--
+                        save.push({x:startv,y:starth, name: 'cruiser', dir: [checkUp, checkDown, checkLeft, checkRight], life: cruiPl})
+                    } else if (player[starth][startv].classList.contains('destroyer')) {
+                        destPl.life--
+                        save.push({x:startv,y:starth, name: 'destroyer',  dir: [checkUp, checkDown, checkLeft, checkRight], life: destPl})
+                    }
+                        checkAll()
+                        return -1;
+                    }
+                    if(!player[starth][startv].classList.contains('boom') && !player[starth][startv].classList.contains('miss')){
+                        player[starth][startv].classList.add('miss')
+                        return 0
+                    }
+                    return -1
+                }else{
+                    return -1;
+                }
+    }
 }
 myPage()
 export { myPage };
-}
 myPage()
 export { myPage };
